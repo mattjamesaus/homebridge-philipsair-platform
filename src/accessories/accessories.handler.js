@@ -23,6 +23,9 @@ class Handler {
       this.accessory.context.config.port,
       this.accessory.context.config.debug ? '-D' : '',
     ].filter((cmd) => cmd);
+
+    this.checkApiVersion();
+
   }
 
   sendCMD(args) {
@@ -344,13 +347,29 @@ class Handler {
     this.wickFilterService = this.accessory.getService('Wick filter');
 
     const args = [...this.args];
+
     args.push('status-observe', '-J');
 
     this.airControl = spawn(args.shift(), args);
 
     this.airControl.stdout.on('data', async (data) => {
+    try {
       this.obj = JSON.parse(data.toString());
       logger.debug(data.toString(), this.accessory.displayName);
+
+      // API version detection on the first response
+      if (!this.apiVersion) {
+        if ('D01-05' in this.obj) {
+          this.apiVersion = 'v2';
+          logger.info('Detected API Version: v2', this.accessory.displayName);
+        } else if ('D01S05' in this.obj) {
+          this.apiVersion = 'v3';
+          logger.info('Detected API Version: v3', this.accessory.displayName);
+        } else {
+          this.apiVersion = 'v1';
+          logger.info('Detected API Version: v1', this.accessory.displayName);
+        }
+      }
 
       //Air Purifier
       this.purifierService
