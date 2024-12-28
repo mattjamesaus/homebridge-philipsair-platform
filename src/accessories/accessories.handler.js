@@ -24,8 +24,6 @@ class Handler {
       this.accessory.context.config.debug ? '-D' : '',
     ].filter((cmd) => cmd);
 
-    this.checkApiVersion();
-
   }
 
   sendCMD(args) {
